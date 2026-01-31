@@ -31,4 +31,48 @@ public class ProveedorDAO {
         }
         return lista;
     }
+
+    public boolean save(Proveedor p) {
+        String sql = "INSERT INTO PROVEEDORES (PROVEEDORID, NOMBREPROV, CONTACTO, CELUPROV, CIUDADPROV) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, p.getProveedorId());
+            stmt.setString(2, p.getNombreProv());
+            stmt.setString(3, p.getContacto());
+            stmt.setString(4, p.getCeluProv());
+            stmt.setString(5, p.getCiudadProv());
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean update(Proveedor p) {
+        String sql = "UPDATE PROVEEDORES SET NOMBREPROV=?, CONTACTO=?, CELUPROV=?, CIUDADPROV=? WHERE PROVEEDORID=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, p.getNombreProv());
+            stmt.setString(2, p.getContacto());
+            stmt.setString(3, p.getCeluProv());
+            stmt.setString(4, p.getCiudadProv());
+            stmt.setInt(5, p.getProveedorId());
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean delete(int id) {
+        String sql = "DELETE FROM PROVEEDORES WHERE PROVEEDORID=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

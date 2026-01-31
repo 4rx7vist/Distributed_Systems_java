@@ -16,7 +16,11 @@ public class App extends Application {
         }).start();
 
         MainView root = new MainView();
-        Scene scene = new Scene(root, 900, 600);
+        Scene scene = new Scene(root, 1000, 700);
+
+        // Load CSS
+        String css = getClass().getResource("/com/distribuidas/styles.css").toExternalForm();
+        scene.getStylesheets().add(css);
 
         stage.setScene(scene);
         stage.setTitle("Distributed Systems - Oracle App");

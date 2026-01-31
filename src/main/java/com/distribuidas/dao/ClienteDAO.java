@@ -52,4 +52,34 @@ public class ClienteDAO {
             return false;
         }
     }
+
+    public boolean update(Cliente c) {
+        String sql = "UPDATE CLIENTES SET CEDULA_RUC=?, NOMBRECIA=?, NOMBRECONTACTO=?, DIRECCIONCLI=?, CELULAR=?, CIUDADCLI=? WHERE CLIENTEID=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, c.getCedulaRuc());
+            stmt.setString(2, c.getNombreCia());
+            stmt.setString(3, c.getNombreContacto());
+            stmt.setString(4, c.getDireccionCli());
+            stmt.setString(5, c.getCelular());
+            stmt.setString(6, c.getCiudadCli());
+            stmt.setInt(7, c.getClienteId());
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean delete(int id) {
+        String sql = "DELETE FROM CLIENTES WHERE CLIENTEID=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
