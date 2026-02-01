@@ -7,8 +7,15 @@ import java.sql.SQLException;
 public class DatabaseConnection {
 
     private static final String URL = "jdbc:oracle:thin:@localhost:1521:orcl"; // Adjust SID if needed (xe, orcl, etc.)
-    private static final String USER = "master";
-    private static final String PASSWORD = "master";
+    private static String user = "master";
+    private static String password = "master";
+
+    public static void setCredentials(String newUser, String newPassword) {
+        user = newUser;
+        password = newPassword;
+        // Close existing connection to force reconnection with new credentials
+        closeConnection();
+    }
 
     private static Connection connection;
 
@@ -22,7 +29,7 @@ public class DatabaseConnection {
     public static Connection getDedicatedConnection() throws SQLException {
         try {
             Class.forName("oracle.jdbc.OracleDriver");
-            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            Connection conn = DriverManager.getConnection(URL, user, password);
             System.out.println("New dedicated connection to Oracle Database established.");
             return conn;
         } catch (ClassNotFoundException e) {

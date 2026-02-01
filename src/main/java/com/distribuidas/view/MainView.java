@@ -121,14 +121,13 @@ public class MainView extends BorderPane {
         Label title = new Label("Gestión Distribuidas - Oracle AP");
         title.getStyleClass().add("header-title");
 
-        // Sucursal Selector (Placeholder for fragmentation)
-        ComboBox<String> cmbSucursal = new ComboBox<>();
-        cmbSucursal.getItems().addAll("Sucursal Central (Master)", "Sucursal Quito", "Sucursal Guayaquil");
-        cmbSucursal.getSelectionModel().selectFirst();
-        cmbSucursal.setStyle("-fx-base: #ecf0f1;");
+        // User Session Info
+        UserSession session = UserSession.getInstance();
+        Label lblInfo = new Label("Usuario: " + session.getUsername() + " | Rol: " + session.getRole() + " ("
+                + session.getLocation() + ")");
+        lblInfo.setStyle("-fx-font-weight: bold; -fx-text-fill: #555;");
 
-        header.getChildren().addAll(title, new Separator(javafx.geometry.Orientation.VERTICAL), new Label("Vista:"),
-                cmbSucursal);
+        header.getChildren().addAll(title, new Separator(javafx.geometry.Orientation.VERTICAL), lblInfo);
         setTop(header);
     }
 
@@ -644,6 +643,8 @@ public class MainView extends BorderPane {
         table.getColumns().add(createColumn("ID", "empleadoId", 50));
         table.getColumns().add(createColumn("Nombre", "nombre", 100));
         table.getColumns().add(createColumn("Apellido", "apellido", 100));
+        table.getColumns().add(createColumn("F. Nacimiento", "fechaNac", 120));
+        table.getColumns().add(createColumn("Extensión", "extension", 80));
         try {
             javafx.collections.ObservableList<Empleado> data = empleadoDAO.getAll();
             table.setItems(data);

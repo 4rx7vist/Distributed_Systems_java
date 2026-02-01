@@ -11,19 +11,32 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         // Initialize Audit logic in background to fix schema if needed
+        // Initialize Audit logic in background
         new Thread(() -> {
             new AuditService().initializeAudit();
         }).start();
 
-        MainView root = new MainView();
-        Scene scene = new Scene(root, 1000, 700);
+        com.distribuidas.view.LoginView loginView = new com.distribuidas.view.LoginView(stage, () -> {
+            MainView root = new MainView();
+            Scene scene = new Scene(root, 1000, 700);
 
-        // Load CSS
-        String css = getClass().getResource("/com/distribuidas/styles.css").toExternalForm();
-        scene.getStylesheets().add(css);
+            // Load CSS
+            try {
+                String css = getClass().getResource("/com/distribuidas/styles.css").toExternalForm();
+                scene.getStylesheets().add(css);
+            } catch (Exception e) {
+                System.out.println("CSS not found");
+            }
 
-        stage.setScene(scene);
-        stage.setTitle("Distributed Systems - Oracle App");
+            stage.setScene(scene);
+            stage.centerOnScreen();
+            stage.setResizable(true);
+        });
+
+        Scene loginScene = new Scene(loginView, 400, 350);
+        stage.setScene(loginScene);
+        stage.setTitle("Distribuidas - Login");
+        stage.setResizable(false);
         stage.show();
     }
 

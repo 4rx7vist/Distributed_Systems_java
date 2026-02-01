@@ -1,5 +1,6 @@
 com\distribuidas\model\Auditoria.class
 com\distribuidas\dao\OrdenDAO.class
+com\distribuidas\view\LoginView.class
 com\distribuidas\dao\EmpleadoDAO.class
 com\distribuidas\dao\AuditoriaDAO.class
 com\distribuidas\dao\ProductoDAO.class
@@ -16,5 +17,6 @@ com\distribuidas\dao\ClienteDAO.class
 com\distribuidas\view\MainView.class
 com\distribuidas\dao\ClienteDAO$1.class
 com\distribuidas\service\AuditService.class
+com\distribuidas\model\UserSession.class
 com\distribuidas\dao\CategoriaDAO.class
 com\distribuidas\model\Categoria.class

@@ -2,6 +2,7 @@ package com.distribuidas.dao;
 
 import com.distribuidas.db.DatabaseConnection;
 import com.distribuidas.model.Proveedor;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
