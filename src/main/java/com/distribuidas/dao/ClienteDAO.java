@@ -9,6 +9,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Properties;
+import oracle.jdbc.OracleConnection;
+import oracle.jdbc.OracleStatement;
+import oracle.jdbc.dcn.DatabaseChangeEvent;
+import oracle.jdbc.dcn.DatabaseChangeListener;
+import oracle.jdbc.dcn.DatabaseChangeRegistration;
 
 public class ClienteDAO {
 
@@ -80,6 +87,47 @@ public class ClienteDAO {
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    // Método para suscribirse a notificaciones de cambio en tiempo real (Oracle
+    // DCN)
+    public void subscribeToUpdates(Runnable onUpdate) {
+        try {
+            // Usamos una conexión dedicada para mantener vivo el listener
+            Connection conn = DatabaseConnection.getDedicatedConnection();
+
+            if (conn.isWrapperFor(OracleConnection.class)) {
+                OracleConnection oracleConn = conn.unwrap(OracleConnection.class);
+
+                Properties prop = new Properties();
+                // Optimización: Si quisieramos solo los ROWIDs cambiados
+                prop.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, "true");
+                prop.setProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, "true");
+
+                DatabaseChangeRegistration dcr = oracleConn.registerDatabaseChangeNotification(prop);
+
+                dcr.addListener(new DatabaseChangeListener() {
+                    @Override
+                    public void onDatabaseChangeNotification(DatabaseChangeEvent e) {
+                        System.out.println("Notificación de cambio recibida de Oracle: " + e.toString());
+                        // Ejecutar la actualización en el hilo de JavaFX
+                        javafx.application.Platform.runLater(onUpdate);
+                    }
+                });
+
+                // Registrar la consulta
+                try (Statement stmt = oracleConn.createStatement()) {
+                    ((OracleStatement) stmt).setDatabaseChangeRegistration(dcr);
+                    // Esta consulta registra el interés en la tabla CLIENTES
+                    stmt.executeQuery("SELECT * FROM CLIENTES");
+                }
+
+                System.out.println("Suscripción a notificaciones DCN exitosa.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Error al registrar Oracle DCN: " + e.getMessage());
         }
     }
 }

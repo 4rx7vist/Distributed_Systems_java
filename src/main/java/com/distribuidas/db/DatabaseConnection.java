@@ -14,20 +14,23 @@ public class DatabaseConnection {
 
     public static Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
-            try {
-                // Load driver explicitly just in case, though usually not needed in modern JDBC
-                Class.forName("oracle.jdbc.OracleDriver");
-                connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                System.out.println("Connection to Oracle Database established successfully.");
-            } catch (ClassNotFoundException e) {
-                System.err.println("Oracle JDBC Driver not found.");
-                e.printStackTrace();
-                throw new SQLException("Oracle JDBC Driver not found.", e);
-            }
+            connection = getDedicatedConnection();
         }
         return connection;
     }
-    
+
+    public static Connection getDedicatedConnection() throws SQLException {
+        try {
+            Class.forName("oracle.jdbc.OracleDriver");
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            System.out.println("New dedicated connection to Oracle Database established.");
+            return conn;
+        } catch (ClassNotFoundException e) {
+            System.err.println("Oracle JDBC Driver not found.");
+            throw new SQLException("Oracle JDBC Driver not found.", e);
+        }
+    }
+
     public static void closeConnection() {
         if (connection != null) {
             try {
