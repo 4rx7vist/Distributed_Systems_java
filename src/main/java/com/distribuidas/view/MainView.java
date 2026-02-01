@@ -11,8 +11,13 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Region;
+import javafx.scene.shape.SVGPath;
+import javafx.collections.transformation.FilteredList;
+import javafx.scene.paint.Color;
 
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class MainView extends BorderPane {
 
@@ -41,7 +46,7 @@ public class MainView extends BorderPane {
 
         // Products Tab
         TableView<Producto> prodTable = createProductoTable();
-        tabPane.getTabs().add(createTab("Productos", createCrudLayout(prodTable, "Producto",
+        tabPane.getTabs().add(createTab("Productos", createCrudLayout(prodTable, "Gestión de Productos", "Producto",
                 () -> showProductoDialog(null, prodTable),
                 p -> showProductoDialog(p, prodTable),
                 p -> {
@@ -49,11 +54,11 @@ public class MainView extends BorderPane {
                         productoDAO.delete(p.getProductoId());
                         refreshTable(prodTable, productoDAO::getAll);
                     }
-                })));
+                }, productoDAO::getAll)));
 
         // Clientes Tab
         TableView<Cliente> cliTable = createClienteTable();
-        tabPane.getTabs().add(createTab("Clientes", createCrudLayout(cliTable, "Cliente",
+        tabPane.getTabs().add(createTab("Clientes", createCrudLayout(cliTable, "Gestión de Clientes", "Cliente",
                 () -> showClienteDialog(null, cliTable),
                 c -> showClienteDialog(c, cliTable),
                 c -> {
@@ -61,11 +66,11 @@ public class MainView extends BorderPane {
                         clienteDAO.delete(c.getClienteId());
                         refreshTable(cliTable, clienteDAO::getAll);
                     }
-                })));
+                }, clienteDAO::getAll)));
 
         // Categorias Tab
         TableView<Categoria> catTable = createCategoriaTable();
-        tabPane.getTabs().add(createTab("Categorias", createCrudLayout(catTable, "Categoría",
+        tabPane.getTabs().add(createTab("Categorias", createCrudLayout(catTable, "Gestión de Categorias", "Categoría",
                 () -> showCategoriaDialog(null, catTable),
                 c -> showCategoriaDialog(c, catTable),
                 c -> {
@@ -73,23 +78,24 @@ public class MainView extends BorderPane {
                         categoriaDAO.delete(c.getCategoriaId());
                         refreshTable(catTable, categoriaDAO::getAll);
                     }
-                })));
+                }, categoriaDAO::getAll)));
 
         // Proveedores Tab
         TableView<Proveedor> provTable = createProveedorTable();
-        tabPane.getTabs().add(createTab("Proveedores", createCrudLayout(provTable, "Proveedor",
-                () -> showProveedorDialog(null, provTable),
-                p -> showProveedorDialog(p, provTable),
-                p -> {
-                    if (confirmDelete()) {
-                        proveedorDAO.delete(p.getProveedorId());
-                        refreshTable(provTable, proveedorDAO::getAll);
-                    }
-                })));
+        tabPane.getTabs()
+                .add(createTab("Proveedores", createCrudLayout(provTable, "Gestión de Proveedores", "Proveedor",
+                        () -> showProveedorDialog(null, provTable),
+                        p -> showProveedorDialog(p, provTable),
+                        p -> {
+                            if (confirmDelete()) {
+                                proveedorDAO.delete(p.getProveedorId());
+                                refreshTable(provTable, proveedorDAO::getAll);
+                            }
+                        }, proveedorDAO::getAll)));
 
         // Empleados Tab
         TableView<Empleado> empTable = createEmpleadoTable();
-        tabPane.getTabs().add(createTab("Empleados", createCrudLayout(empTable, "Empleado",
+        tabPane.getTabs().add(createTab("Empleados", createCrudLayout(empTable, "Gestión de Empleados", "Empleado",
                 () -> showEmpleadoDialog(null, empTable),
                 e -> showEmpleadoDialog(e, empTable),
                 e -> {
@@ -97,7 +103,7 @@ public class MainView extends BorderPane {
                         empleadoDAO.delete(e.getEmpleadoId());
                         refreshTable(empTable, empleadoDAO::getAll);
                     }
-                })));
+                }, empleadoDAO::getAll)));
 
         // Ordenes Tab
         tabPane.getTabs().add(createTab("Ordenes", createOrdenesLayout()));
@@ -126,12 +132,38 @@ public class MainView extends BorderPane {
         setTop(header);
     }
 
-    private void refreshTable(TableView table, java.util.function.Supplier<javafx.collections.ObservableList> loader) {
+    private <T> void refreshTable(TableView<T> table,
+            java.util.function.Supplier<javafx.collections.ObservableList<T>> loader) {
         try {
-            table.setItems(loader.get());
+            javafx.collections.ObservableList<T> data = loader.get();
+            table.setUserData(data); // Store master list for filtering
+            table.setItems(data);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private <T> void applyFilter(TableView<T> table, String query) {
+        javafx.collections.ObservableList<T> master = (javafx.collections.ObservableList<T>) table.getUserData();
+        if (master == null)
+            return;
+
+        if (query == null || query.isEmpty()) {
+            table.setItems(master);
+            return;
+        }
+
+        FilteredList<T> filtered = new FilteredList<>(master);
+        filtered.setPredicate(item -> {
+            for (TableColumn<T, ?> col : table.getColumns()) {
+                Object val = col.getCellData(item);
+                if (val != null && val.toString().toLowerCase().contains(query.toLowerCase())) {
+                    return true;
+                }
+            }
+            return false;
+        });
+        table.setItems(filtered);
     }
 
     private boolean confirmDelete() {
@@ -460,15 +492,42 @@ public class MainView extends BorderPane {
     /**
      * Creates a standard CRUD layout with a Toolbar and a Table.
      */
-    private <T> VBox createCrudLayout(TableView<T> table, String entityName,
-            Runnable onAdd, Consumer<T> onEdit, Consumer<T> onDelete) {
+    private <T> VBox createCrudLayout(TableView<T> table, String title, String entityName,
+            Runnable onAdd, Consumer<T> onEdit, Consumer<T> onDelete,
+            Supplier<javafx.collections.ObservableList<T>> loader) {
         VBox layout = new VBox();
-        layout.setSpacing(0);
+        layout.setSpacing(10); // Spacing between toolbar and table
 
         // Toolbar
         HBox toolbar = new HBox(10);
         toolbar.getStyleClass().add("crud-toolbar");
         toolbar.setAlignment(Pos.CENTER_LEFT);
+
+        // Title
+        Label lblTitle = new Label(title);
+        lblTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+
+        // Spacer to push buttons to right
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        // Search Bar
+        Label lblSearch = new Label("Buscar:");
+        TextField txtSearch = new TextField();
+        txtSearch.setPromptText("Buscar...");
+
+        Button btnSearch = new Button("Buscar");
+        btnSearch.setOnAction(e -> applyFilter(table, txtSearch.getText()));
+
+        Button btnClear = new Button("Limpiar");
+        btnClear.setStyle("-fx-background-color: #95a5a6;"); // Grey color
+        btnClear.setOnAction(e -> {
+            txtSearch.clear();
+            applyFilter(table, "");
+        });
+
+        HBox searchBox = new HBox(5, lblSearch, txtSearch, btnSearch, btnClear);
+        searchBox.setAlignment(Pos.CENTER_LEFT);
 
         Button btnAdd = new Button("Nuevo " + entityName);
         btnAdd.setOnAction(e -> onAdd.run());
@@ -492,7 +551,20 @@ public class MainView extends BorderPane {
                 showAlert("Selecciona un elemento para eliminar.");
         });
 
-        toolbar.getChildren().addAll(btnAdd, btnEdit, btnDelete);
+        Button btnRefresh = new Button();
+        btnRefresh.setGraphic(createRefreshIcon());
+        btnRefresh.setTooltip(new Tooltip("Refrescar tabla"));
+        btnRefresh.setOnAction(e -> {
+            refreshTable(table, loader);
+            txtSearch.clear(); // Clear search on refresh
+        });
+
+        toolbar.getChildren().addAll(lblTitle, spacer, searchBox, btnAdd, btnEdit, btnDelete, btnRefresh);
+
+        // Initial Master Data Set
+        if (table.getItems() != null) {
+            table.setUserData(table.getItems());
+        }
 
         // Table
         VBox.setVgrow(table, Priority.ALWAYS);
@@ -517,7 +589,9 @@ public class MainView extends BorderPane {
         table.getColumns().add(createColumn("Precio", "precioUnit", 100));
         table.getColumns().add(createColumn("Existencia", "existencia", 80));
         try {
-            table.setItems(productoDAO.getAll());
+            javafx.collections.ObservableList<Producto> data = productoDAO.getAll();
+            table.setItems(data);
+            table.setUserData(data); // Store master list for filtering
         } catch (Exception e) {
         }
         return table;
@@ -530,7 +604,9 @@ public class MainView extends BorderPane {
         table.getColumns().add(createColumn("Contacto", "nombreContacto", 150));
         table.getColumns().add(createColumn("Ciudad", "ciudadCli", 100));
         try {
-            table.setItems(clienteDAO.getAll());
+            javafx.collections.ObservableList<Cliente> data = clienteDAO.getAll();
+            table.setItems(data);
+            table.setUserData(data); // Store master list for filtering
         } catch (Exception e) {
         }
         return table;
@@ -541,7 +617,9 @@ public class MainView extends BorderPane {
         table.getColumns().add(createColumn("ID", "categoriaId", 50));
         table.getColumns().add(createColumn("Nombre", "nombreCat", 200));
         try {
-            table.setItems(categoriaDAO.getAll());
+            javafx.collections.ObservableList<Categoria> data = categoriaDAO.getAll();
+            table.setItems(data);
+            table.setUserData(data); // Store master list for filtering
         } catch (Exception e) {
         }
         return table;
@@ -553,7 +631,9 @@ public class MainView extends BorderPane {
         table.getColumns().add(createColumn("Nombre", "nombreProv", 150));
         table.getColumns().add(createColumn("Ciudad", "ciudadProv", 100));
         try {
-            table.setItems(proveedorDAO.getAll());
+            javafx.collections.ObservableList<Proveedor> data = proveedorDAO.getAll();
+            table.setItems(data);
+            table.setUserData(data); // Store master list for filtering
         } catch (Exception e) {
         }
         return table;
@@ -565,7 +645,9 @@ public class MainView extends BorderPane {
         table.getColumns().add(createColumn("Nombre", "nombre", 100));
         table.getColumns().add(createColumn("Apellido", "apellido", 100));
         try {
-            table.setItems(empleadoDAO.getAll());
+            javafx.collections.ObservableList<Empleado> data = empleadoDAO.getAll();
+            table.setItems(data);
+            table.setUserData(data); // Store master list for filtering
         } catch (Exception e) {
         }
         return table;
@@ -575,10 +657,50 @@ public class MainView extends BorderPane {
         VBox layout = new VBox(10);
         layout.setPadding(new Insets(15));
 
-        Label lblMaster = new Label("Listado de Ordenes");
-        lblMaster.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+        // Toolbar for Order
+        HBox toolbar = new HBox(10);
+        toolbar.setAlignment(Pos.CENTER_LEFT);
 
+        Label lblMaster = new Label("Listado de Ordenes");
+        lblMaster.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #2c3e50;");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button btnRefresh = new Button();
+        btnRefresh.setGraphic(createRefreshIcon());
+        btnRefresh.setTooltip(new Tooltip("Refrescar ordenes"));
+
+        // Define table early to use in action
         TableView<Orden> table = new TableView<>();
+
+        // Search for Orders
+        Label lblSearch = new Label("Buscar:");
+        TextField txtSearch = new TextField();
+        txtSearch.setPromptText("Buscar...");
+
+        Button btnSearch = new Button("Buscar");
+        btnSearch.setOnAction(e -> applyFilter(table, txtSearch.getText()));
+
+        Button btnClear = new Button("Limpiar");
+        btnClear.setStyle("-fx-background-color: #95a5a6;");
+        btnClear.setOnAction(e -> {
+            txtSearch.clear();
+            applyFilter(table, "");
+        });
+
+        HBox searchBox = new HBox(5, lblSearch, txtSearch, btnSearch, btnClear);
+        searchBox.setAlignment(Pos.CENTER_LEFT);
+
+        btnRefresh.setOnAction(e -> {
+            try {
+                refreshTable(table, ordenDAO::getAll); // Use refreshTable logic
+                txtSearch.clear();
+            } catch (Exception ex) {
+            }
+        });
+
+        toolbar.getChildren().addAll(lblMaster, spacer, searchBox, btnRefresh);
         table.getColumns().add(createColumn("Orden ID", "ordenId", 80));
         table.getColumns().add(createColumn("Cliente ID", "clienteId", 80));
         table.getColumns().add(createColumn("Emp ID", "empleadoId", 80));
@@ -601,24 +723,34 @@ public class MainView extends BorderPane {
         });
 
         try {
-            table.setItems(ordenDAO.getAll());
+            javafx.collections.ObservableList<Orden> data = ordenDAO.getAll();
+            table.setItems(data);
+            table.setUserData(data);
         } catch (Exception e) {
         }
 
-        // Add a simple toolbar for orders too?
-        Button btnRefresh = new Button("Refrescar");
-        btnRefresh.setOnAction(e -> {
-            try {
-                table.setItems(ordenDAO.getAll());
-            } catch (Exception ex) {
-            }
-        });
-
-        layout.getChildren().addAll(lblMaster, btnRefresh, table, lblDetail, detailTable);
+        layout.getChildren().addAll(toolbar, table, lblDetail, detailTable);
         return layout;
     }
 
-    private TableView<Auditoria> createAuditoriaTable() {
+    private Node createAuditoriaTable() {
+        VBox layout = new VBox(10);
+        layout.setPadding(new Insets(10));
+
+        // Toolbar
+        HBox toolbar = new HBox(10);
+        toolbar.setAlignment(Pos.CENTER_LEFT);
+
+        Label lblTitle = new Label("Registros de Auditoría");
+        lblTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #2c3e50;");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button btnRefresh = new Button();
+        btnRefresh.setGraphic(createRefreshIcon());
+        btnRefresh.setTooltip(new Tooltip("Refrescar auditoría"));
+
         TableView<Auditoria> table = new TableView<>();
         table.getStyleClass().add("audit-table");
         table.getColumns().add(createColumn("User", "userName", 100));
@@ -628,12 +760,42 @@ public class MainView extends BorderPane {
         table.getColumns().add(createColumn("Anterior", "anterior", 250));
         table.getColumns().add(createColumn("Nuevo", "nuevo", 250));
 
+        // Search for Audit
+        Label lblSearch = new Label("Buscar:");
+        TextField txtSearch = new TextField();
+        txtSearch.setPromptText("Buscar...");
+
+        Button btnSearch = new Button("Buscar");
+        btnSearch.setOnAction(e -> applyFilter(table, txtSearch.getText()));
+
+        Button btnClear = new Button("Limpiar");
+        btnClear.setStyle("-fx-background-color: #95a5a6;");
+        btnClear.setOnAction(e -> {
+            txtSearch.clear();
+            applyFilter(table, "");
+        });
+
+        HBox searchBox = new HBox(5, lblSearch, txtSearch, btnSearch, btnClear);
+        searchBox.setAlignment(Pos.CENTER_LEFT);
+
+        btnRefresh.setOnAction(e -> {
+            refreshTable(table, auditoriaDAO::getAll);
+            txtSearch.clear();
+        });
+
+        toolbar.getChildren().addAll(lblTitle, spacer, searchBox, btnRefresh);
+
         try {
-            table.setItems(auditoriaDAO.getAll());
+            javafx.collections.ObservableList<Auditoria> data = auditoriaDAO.getAll();
+            table.setItems(data);
+            table.setUserData(data);
         } catch (Exception e) {
         }
 
-        return table;
+        VBox.setVgrow(table, Priority.ALWAYS);
+        layout.getChildren().addAll(toolbar, table);
+
+        return layout;
     }
 
     private <S, T> TableColumn<S, T> createColumn(String title, String property, double width) {
@@ -641,5 +803,15 @@ public class MainView extends BorderPane {
         col.setCellValueFactory(new PropertyValueFactory<>(property));
         col.setMinWidth(width);
         return col;
+    }
+
+    private Node createRefreshIcon() {
+        SVGPath path = new SVGPath();
+        path.setContent(
+                "M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z");
+        path.setFill(Color.WHITE);
+        path.setScaleX(0.8);
+        path.setScaleY(0.8);
+        return path;
     }
 }
