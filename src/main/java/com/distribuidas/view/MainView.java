@@ -1,6 +1,12 @@
 package com.distribuidas.view;
 
-import com.distribuidas.dao.*;
+import com.distribuidas.dao.master.AuditoriaDAO;
+import com.distribuidas.dao.master.CategoriaDAO;
+import com.distribuidas.dao.master.ClienteDAO;
+import com.distribuidas.dao.master.EmpleadoDAO;
+import com.distribuidas.dao.master.OrdenDAO;
+import com.distribuidas.dao.master.ProductoDAO;
+import com.distribuidas.dao.master.ProveedorDAO;
 import com.distribuidas.model.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -29,6 +35,17 @@ public class MainView extends BorderPane {
     private OrdenDAO ordenDAO;
     private AuditoriaDAO auditoriaDAO;
 
+    // Additional DAOs for Sucursales
+    private com.distribuidas.dao.ramiro.ClienteDAO ramiroClienteDAO;
+    private com.distribuidas.dao.ramiro.ProveedorDAO ramiroProveedorDAO;
+    private com.distribuidas.dao.jorge.ClienteDAO jorgeClienteDAO;
+    private com.distribuidas.dao.jorge.ProveedorDAO jorgeProveedorDAO;
+
+    // UI Controls as fields to allow updates
+    private ComboBox<String> cmbSucursal;
+    private TableView<Cliente> cliTable;
+    private TableView<Proveedor> provTable;
+
     public MainView() {
         // Initialize DAOs
         productoDAO = new ProductoDAO();
@@ -39,7 +56,24 @@ public class MainView extends BorderPane {
         ordenDAO = new OrdenDAO();
         auditoriaDAO = new AuditoriaDAO();
 
+        // Initialize Sucursal DAOs
+        ramiroClienteDAO = new com.distribuidas.dao.ramiro.ClienteDAO();
+        ramiroProveedorDAO = new com.distribuidas.dao.ramiro.ProveedorDAO();
+        jorgeClienteDAO = new com.distribuidas.dao.jorge.ClienteDAO();
+        jorgeProveedorDAO = new com.distribuidas.dao.jorge.ProveedorDAO();
+
         // UI Setup
+
+        // Initialize Sucursal Selector First
+        cmbSucursal = new ComboBox<>();
+        cmbSucursal.getItems().addAll("Sucursal Central (Master)", "Sucursal Quito", "Sucursal Guayaquil");
+        cmbSucursal.getSelectionModel().selectFirst();
+        cmbSucursal.setStyle("-fx-base: #ecf0f1;");
+        cmbSucursal.valueProperty().addListener((obs, oldVal, newVal) -> {
+            refreshTable(cliTable, this::loadClientes);
+            refreshTable(provTable, this::loadProveedores);
+        });
+
         TabPane tabPane = new TabPane();
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         tabPane.getStyleClass().add("tab-pane");
@@ -57,16 +91,16 @@ public class MainView extends BorderPane {
                 }, productoDAO::getAll)));
 
         // Clientes Tab
-        TableView<Cliente> cliTable = createClienteTable();
+        cliTable = createClienteTable(); // promote to field
         tabPane.getTabs().add(createTab("Clientes", createCrudLayout(cliTable, "Gestión de Clientes", "Cliente",
                 () -> showClienteDialog(null, cliTable),
                 c -> showClienteDialog(c, cliTable),
                 c -> {
                     if (confirmDelete()) {
                         clienteDAO.delete(c.getClienteId());
-                        refreshTable(cliTable, clienteDAO::getAll);
+                        refreshTable(cliTable, this::loadClientes);
                     }
-                }, clienteDAO::getAll)));
+                }, this::loadClientes)));
 
         // Categorias Tab
         TableView<Categoria> catTable = createCategoriaTable();
@@ -81,7 +115,7 @@ public class MainView extends BorderPane {
                 }, categoriaDAO::getAll)));
 
         // Proveedores Tab
-        TableView<Proveedor> provTable = createProveedorTable();
+        provTable = createProveedorTable(); // promote to field
         tabPane.getTabs()
                 .add(createTab("Proveedores", createCrudLayout(provTable, "Gestión de Proveedores", "Proveedor",
                         () -> showProveedorDialog(null, provTable),
@@ -89,9 +123,9 @@ public class MainView extends BorderPane {
                         p -> {
                             if (confirmDelete()) {
                                 proveedorDAO.delete(p.getProveedorId());
-                                refreshTable(provTable, proveedorDAO::getAll);
+                                refreshTable(provTable, this::loadProveedores);
                             }
-                        }, proveedorDAO::getAll)));
+                        }, this::loadProveedores)));
 
         // Empleados Tab
         TableView<Empleado> empTable = createEmpleadoTable();
@@ -118,14 +152,15 @@ public class MainView extends BorderPane {
         header.getStyleClass().add("header-panel");
         header.setAlignment(Pos.CENTER_LEFT);
 
-        Label title = new Label("Gestión Distribuidas - Oracle AP");
+        Label title = new Label("Gestión Distribuidas - Sucursal Principal");
         title.getStyleClass().add("header-title");
 
-        // Sucursal Selector (Placeholder for fragmentation)
-        ComboBox<String> cmbSucursal = new ComboBox<>();
-        cmbSucursal.getItems().addAll("Sucursal Central (Master)", "Sucursal Quito", "Sucursal Guayaquil");
-        cmbSucursal.getSelectionModel().selectFirst();
-        cmbSucursal.setStyle("-fx-base: #ecf0f1;");
+        // Sucursal Selector (Moved to top init)
+        // ComboBox<String> cmbSucursal = new ComboBox<>();
+        // cmbSucursal.getItems().addAll("Sucursal Central (Master)", "Sucursal Quito",
+        // "Sucursal Guayaquil");
+        // cmbSucursal.getSelectionModel().selectFirst();
+        // cmbSucursal.setStyle("-fx-base: #ecf0f1;");
 
         header.getChildren().addAll(title, new Separator(javafx.geometry.Orientation.VERTICAL), new Label("Vista:"),
                 cmbSucursal);
@@ -171,6 +206,36 @@ public class MainView extends BorderPane {
                 ButtonType.YES, ButtonType.NO);
         alert.showAndWait();
         return alert.getResult() == ButtonType.YES;
+    }
+
+    // --- Dynamic Loaders ---
+
+    private javafx.collections.ObservableList<Cliente> loadClientes() {
+        String suc = cmbSucursal.getValue();
+        if (suc == null)
+            return clienteDAO.getAll();
+
+        if (suc.contains("Quito")) {
+            return ramiroClienteDAO.getAll();
+        } else if (suc.contains("Guayaquil")) {
+            return jorgeClienteDAO.getAll();
+        } else {
+            return clienteDAO.getAll();
+        }
+    }
+
+    private javafx.collections.ObservableList<Proveedor> loadProveedores() {
+        String suc = cmbSucursal.getValue();
+        if (suc == null)
+            return proveedorDAO.getAll();
+
+        if (suc.contains("Quito")) {
+            return ramiroProveedorDAO.getAll();
+        } else if (suc.contains("Guayaquil")) {
+            return jorgeProveedorDAO.getAll();
+        } else {
+            return proveedorDAO.getAll();
+        }
     }
 
     // --- Dialogs ---
@@ -604,7 +669,7 @@ public class MainView extends BorderPane {
         table.getColumns().add(createColumn("Contacto", "nombreContacto", 150));
         table.getColumns().add(createColumn("Ciudad", "ciudadCli", 100));
         try {
-            javafx.collections.ObservableList<Cliente> data = clienteDAO.getAll();
+            javafx.collections.ObservableList<Cliente> data = loadClientes(); // Use dynamic loader
             table.setItems(data);
             table.setUserData(data); // Store master list for filtering
         } catch (Exception e) {
@@ -631,7 +696,7 @@ public class MainView extends BorderPane {
         table.getColumns().add(createColumn("Nombre", "nombreProv", 150));
         table.getColumns().add(createColumn("Ciudad", "ciudadProv", 100));
         try {
-            javafx.collections.ObservableList<Proveedor> data = proveedorDAO.getAll();
+            javafx.collections.ObservableList<Proveedor> data = loadProveedores(); // Use dynamic loader
             table.setItems(data);
             table.setUserData(data); // Store master list for filtering
         } catch (Exception e) {

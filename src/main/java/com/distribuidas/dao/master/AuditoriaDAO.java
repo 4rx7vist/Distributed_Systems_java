@@ -1,4 +1,4 @@
-package com.distribuidas.dao;
+package com.distribuidas.dao.master;
 
 import com.distribuidas.db.DatabaseConnection;
 import com.distribuidas.model.Auditoria;
