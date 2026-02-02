@@ -54,7 +54,7 @@ public class CategoriaDAO {
     }
 
     public boolean delete(int id) {
-        String sql = "DELETE FROM CATEGORIAS WHERE CATEGORIAID=?";
+        String sql = "DELETE FROM VMCATEGORIAS WHERE CATEGORIAID=?";
         try (Connection conn = DatabaseConnection.getConnection();
                 java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
