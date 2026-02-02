@@ -14,7 +14,7 @@ public class AuditoriaDAO {
 
     public ObservableList<Auditoria> getAll() {
         ObservableList<Auditoria> lista = FXCollections.observableArrayList();
-        String sql = "SELECT * FROM Auditoria@dblink_Alexis ORDER BY FECHA DESC";
+        String sql = "SELECT * FROM Auditoria ORDER BY FECHA DESC";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()) {
