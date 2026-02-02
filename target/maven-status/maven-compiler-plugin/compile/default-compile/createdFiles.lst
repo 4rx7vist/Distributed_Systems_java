@@ -9,7 +9,9 @@ com\distribuidas\model\DetalleOrden.class
 com\distribuidas\App.class
 com\distribuidas\dao\master\EmpleadoDAO.class
 com\distribuidas\view\MainView.class
+com\distribuidas\dao\jorge\AuditoriaDAO.class
 com\distribuidas\service\AuditService.class
+com\distribuidas\dao\ramiro\AuditoriaDAO.class
 com\distribuidas\model\Auditoria.class
 com\distribuidas\dao\master\CategoriaDAO.class
 com\distribuidas\db\DatabaseConnection.class

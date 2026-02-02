@@ -38,13 +38,17 @@ public class MainView extends BorderPane {
     // Additional DAOs for Sucursales
     private com.distribuidas.dao.ramiro.ClienteDAO ramiroClienteDAO;
     private com.distribuidas.dao.ramiro.ProveedorDAO ramiroProveedorDAO;
+    private com.distribuidas.dao.ramiro.AuditoriaDAO ramiroAuditoriaDAO;
+
     private com.distribuidas.dao.jorge.ClienteDAO jorgeClienteDAO;
     private com.distribuidas.dao.jorge.ProveedorDAO jorgeProveedorDAO;
+    private com.distribuidas.dao.jorge.AuditoriaDAO jorgeAuditoriaDAO;
 
     // UI Controls as fields to allow updates
     private ComboBox<String> cmbSucursal;
     private TableView<Cliente> cliTable;
     private TableView<Proveedor> provTable;
+    private TableView<Auditoria> auditTable;
 
     public MainView() {
         // Initialize DAOs
@@ -59,8 +63,11 @@ public class MainView extends BorderPane {
         // Initialize Sucursal DAOs
         ramiroClienteDAO = new com.distribuidas.dao.ramiro.ClienteDAO();
         ramiroProveedorDAO = new com.distribuidas.dao.ramiro.ProveedorDAO();
+        ramiroAuditoriaDAO = new com.distribuidas.dao.ramiro.AuditoriaDAO();
+
         jorgeClienteDAO = new com.distribuidas.dao.jorge.ClienteDAO();
         jorgeProveedorDAO = new com.distribuidas.dao.jorge.ProveedorDAO();
+        jorgeAuditoriaDAO = new com.distribuidas.dao.jorge.AuditoriaDAO();
 
         // UI Setup
 
@@ -72,6 +79,7 @@ public class MainView extends BorderPane {
         cmbSucursal.valueProperty().addListener((obs, oldVal, newVal) -> {
             refreshTable(cliTable, this::loadClientes);
             refreshTable(provTable, this::loadProveedores);
+            refreshTable(auditTable, this::loadAuditoria);
         });
 
         TabPane tabPane = new TabPane();
@@ -155,13 +163,6 @@ public class MainView extends BorderPane {
         Label title = new Label("Gestión Distribuidas - Sucursal Principal");
         title.getStyleClass().add("header-title");
 
-        // Sucursal Selector (Moved to top init)
-        // ComboBox<String> cmbSucursal = new ComboBox<>();
-        // cmbSucursal.getItems().addAll("Sucursal Central (Master)", "Sucursal Quito",
-        // "Sucursal Guayaquil");
-        // cmbSucursal.getSelectionModel().selectFirst();
-        // cmbSucursal.setStyle("-fx-base: #ecf0f1;");
-
         header.getChildren().addAll(title, new Separator(javafx.geometry.Orientation.VERTICAL), new Label("Vista:"),
                 cmbSucursal);
         setTop(header);
@@ -235,6 +236,20 @@ public class MainView extends BorderPane {
             return jorgeProveedorDAO.getAll();
         } else {
             return proveedorDAO.getAll();
+        }
+    }
+
+    private javafx.collections.ObservableList<Auditoria> loadAuditoria() {
+        String suc = cmbSucursal.getValue();
+        if (suc == null)
+            return auditoriaDAO.getAll();
+
+        if (suc.contains("Quito")) {
+            return ramiroAuditoriaDAO.getAll();
+        } else if (suc.contains("Guayaquil")) {
+            return jorgeAuditoriaDAO.getAll();
+        } else {
+            return auditoriaDAO.getAll();
         }
     }
 
@@ -816,14 +831,16 @@ public class MainView extends BorderPane {
         btnRefresh.setGraphic(createRefreshIcon());
         btnRefresh.setTooltip(new Tooltip("Refrescar auditoría"));
 
-        TableView<Auditoria> table = new TableView<>();
-        table.getStyleClass().add("audit-table");
-        table.getColumns().add(createColumn("User", "userName", 100));
-        table.getColumns().add(createColumn("Fecha", "fecha", 150));
-        table.getColumns().add(createColumn("Op", "tipoOperacion", 50));
-        table.getColumns().add(createColumn("Tabla", "nombreTable", 120));
-        table.getColumns().add(createColumn("Anterior", "anterior", 250));
-        table.getColumns().add(createColumn("Nuevo", "nuevo", 250));
+        auditTable = new TableView<>();
+        auditTable.getStyleClass().add("audit-table");
+        auditTable.getColumns().add(createColumn("User", "userName", 100));
+        auditTable.getColumns().add(createColumn("Fecha", "fecha", 150));
+        auditTable.getColumns().add(createColumn("Op", "tipoOperacion", 50));
+        auditTable.getColumns().add(createColumn("Tabla", "nombreTable", 120));
+        auditTable.getColumns().add(createColumn("Anterior", "anterior", 250));
+        auditTable.getColumns().add(createColumn("Nuevo", "nuevo", 250));
+
+        TableView<Auditoria> table = auditTable; // local var for existing code compatibility
 
         // Search for Audit
         Label lblSearch = new Label("Buscar:");
@@ -844,14 +861,14 @@ public class MainView extends BorderPane {
         searchBox.setAlignment(Pos.CENTER_LEFT);
 
         btnRefresh.setOnAction(e -> {
-            refreshTable(table, auditoriaDAO::getAll);
+            refreshTable(table, this::loadAuditoria);
             txtSearch.clear();
         });
 
         toolbar.getChildren().addAll(lblTitle, spacer, searchBox, btnRefresh);
 
         try {
-            javafx.collections.ObservableList<Auditoria> data = auditoriaDAO.getAll();
+            javafx.collections.ObservableList<Auditoria> data = loadAuditoria();
             table.setItems(data);
             table.setUserData(data);
         } catch (Exception e) {
