@@ -21,7 +21,7 @@ public class ClienteDAO {
 
     public ObservableList<Cliente> getAll() {
         ObservableList<Cliente> lista = FXCollections.observableArrayList();
-        String sql = "SELECT * FROM CLIENTES ORDER BY CLIENTEID";
+        String sql = "SELECT * FROM FRAGMENTO_CLIENTES_GUAYAQUIL ORDER BY CLIENTEID";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()) {
@@ -43,7 +43,7 @@ public class ClienteDAO {
 
     // Additional methods (save, update, delete) would follow similar pattern
     public boolean save(Cliente c) {
-        String sql = "INSERT INTO CLIENTES VALUES (?, ?, ?, ?, ?, ?, ?)"; // Assumes order matches table def
+        String sql = "INSERT INTO FRAGMENTO_CLIENTES_GUAYAQUIL VALUES (?, ?, ?, ?, ?, ?, ?)"; // Assumes order matches table def
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, c.getClienteId());
@@ -61,7 +61,7 @@ public class ClienteDAO {
     }
 
     public boolean update(Cliente c) {
-        String sql = "UPDATE CLIENTES SET CEDULA_RUC=?, NOMBRECIA=?, NOMBRECONTACTO=?, DIRECCIONCLI=?, CELULAR=?, CIUDADCLI=? WHERE CLIENTEID=?";
+        String sql = "UPDATE FRAGMENTO_CLIENTES_GUAYAQUIL SET CEDULA_RUC=?, NOMBRECIA=?, NOMBRECONTACTO=?, DIRECCIONCLI=?, CELULAR=?, CIUDADCLI=? WHERE CLIENTEID=?";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, c.getCedulaRuc());
@@ -79,7 +79,7 @@ public class ClienteDAO {
     }
 
     public boolean delete(int id) {
-        String sql = "DELETE FROM CLIENTES WHERE CLIENTEID=?";
+        String sql = "DELETE FROM FRAGMENTO_CLIENTES_GUAYAQUIL WHERE CLIENTEID=?";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
@@ -120,7 +120,7 @@ public class ClienteDAO {
                 try (Statement stmt = oracleConn.createStatement()) {
                     ((OracleStatement) stmt).setDatabaseChangeRegistration(dcr);
                     // Esta consulta registra el interés en la tabla CLIENTES
-                    stmt.executeQuery("SELECT * FROM CLIENTES");
+                    stmt.executeQuery("SELECT * FROM FRAGMENTO_CLIENTES_GUAYAQUIL");
                 }
 
                 System.out.println("Suscripción a notificaciones DCN exitosa.");

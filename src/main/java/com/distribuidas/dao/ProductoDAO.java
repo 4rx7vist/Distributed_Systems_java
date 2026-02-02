@@ -14,7 +14,7 @@ public class ProductoDAO {
 
     public ObservableList<Producto> getAll() {
         ObservableList<Producto> lista = FXCollections.observableArrayList();
-        String sql = "SELECT * FROM PRODUCTOS ORDER BY PRODUCTOID";
+        String sql = "SELECT * FROM VMPRODUCTOS ORDER BY PRODUCTOID";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()) {
@@ -34,7 +34,7 @@ public class ProductoDAO {
     }
 
     public boolean save(Producto p) {
-        String sql = "INSERT INTO PRODUCTOS (PRODUCTOID, CATEGORIAID, PROVEEDORID, DESCRIPCION, PRECIOUNIT, EXISTENCIA) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO VMPRODUCTOS (PRODUCTOID, CATEGORIAID, PROVEEDORID, DESCRIPCION, PRECIOUNIT, EXISTENCIA) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, p.getProductoId());

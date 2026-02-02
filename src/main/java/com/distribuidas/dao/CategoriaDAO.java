@@ -14,7 +14,7 @@ public class CategoriaDAO {
 
     public ObservableList<Categoria> getAll() {
         ObservableList<Categoria> lista = FXCollections.observableArrayList();
-        String sql = "SELECT * FROM CATEGORIAS ORDER BY CATEGORIAID";
+        String sql = "SELECT * FROM VMCATEGORIAS ORDER BY CATEGORIAID";
         try (Connection conn = DatabaseConnection.getConnection();
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(sql)) {
@@ -28,7 +28,7 @@ public class CategoriaDAO {
     }
 
     public boolean save(Categoria c) {
-        String sql = "INSERT INTO CATEGORIAS (CATEGORIAID, NOMBRECAT) VALUES (?, ?)";
+        String sql = "INSERT INTO VMCATEGORIAS (CATEGORIAID, NOMBRECAT) VALUES (?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
                 java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, c.getCategoriaId());
@@ -41,7 +41,7 @@ public class CategoriaDAO {
     }
 
     public boolean update(Categoria c) {
-        String sql = "UPDATE CATEGORIAS SET NOMBRECAT=? WHERE CATEGORIAID=?";
+        String sql = "UPDATE VMCATEGORIAS SET NOMBRECAT=? WHERE CATEGORIAID=?";
         try (Connection conn = DatabaseConnection.getConnection();
                 java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, c.getNombreCat());

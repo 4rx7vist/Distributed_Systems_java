@@ -7,8 +7,8 @@ import java.sql.SQLException;
 public class DatabaseConnection {
 
     private static final String URL = "jdbc:oracle:thin:@localhost:1521:orcl"; // Adjust SID if needed (xe, orcl, etc.)
-    private static final String USER = "master";
-    private static final String PASSWORD = "master";
+    private static final String USER = "jrevelo";
+    private static final String PASSWORD = "jrevelo";
 
     private static Connection connection;
 

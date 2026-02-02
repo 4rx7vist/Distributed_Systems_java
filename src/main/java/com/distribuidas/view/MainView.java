@@ -112,12 +112,12 @@ public class MainView extends BorderPane {
         header.getStyleClass().add("header-panel");
         header.setAlignment(Pos.CENTER_LEFT);
 
-        Label title = new Label("Gestión Distribuidas - Oracle AP");
+        Label title = new Label("Gestión Distribuidas - Guayaquil");
         title.getStyleClass().add("header-title");
 
         // Sucursal Selector (Placeholder for fragmentation)
         ComboBox<String> cmbSucursal = new ComboBox<>();
-        cmbSucursal.getItems().addAll("Sucursal Central (Master)", "Sucursal Quito", "Sucursal Guayaquil");
+            //cmbSucursal.getItems().addAll("Sucursal Central (Master)", "Sucursal Quito", "Sucursal Guayaquil");
         cmbSucursal.getSelectionModel().selectFirst();
         cmbSucursal.setStyle("-fx-base: #ecf0f1;");
 
@@ -399,8 +399,6 @@ public class MainView extends BorderPane {
         TextField txtNom = new TextField();
         TextField txtApe = new TextField();
         DatePicker dpNac = new DatePicker();
-        TextField txtRep = new TextField();
-        TextField txtExt = new TextField();
 
         if (e != null) {
             txtId.setText(String.valueOf(e.getEmpleadoId()));
@@ -409,29 +407,21 @@ public class MainView extends BorderPane {
             txtApe.setText(e.getApellido());
             if (e.getFechaNac() != null)
                 dpNac.setValue(e.getFechaNac().toLocalDate());
-            if (e.getReportaA() != null)
-                txtRep.setText(String.valueOf(e.getReportaA()));
-            if (e.getExtension() != null)
-                txtExt.setText(String.valueOf(e.getExtension()));
         }
 
         grid.addRow(0, new Label("ID:"), txtId);
         grid.addRow(1, new Label("Nombre:"), txtNom);
         grid.addRow(2, new Label("Apellido:"), txtApe);
         grid.addRow(3, new Label("F. Nacimiento:"), dpNac);
-        grid.addRow(4, new Label("Reporta A (ID):"), txtRep);
-        grid.addRow(5, new Label("Extensión:"), txtExt);
 
         dialog.getDialogPane().setContent(grid);
 
         dialog.setResultConverter(btn -> {
             if (btn == ButtonType.OK) {
                 try {
-                    Integer rep = txtRep.getText().isEmpty() ? null : Integer.parseInt(txtRep.getText());
-                    Integer ext = txtExt.getText().isEmpty() ? null : Integer.parseInt(txtExt.getText());
                     java.sql.Date date = dpNac.getValue() != null ? java.sql.Date.valueOf(dpNac.getValue()) : null;
-                    return new Empleado(Integer.parseInt(txtId.getText()), rep, txtNom.getText(), txtApe.getText(),
-                            date, ext);
+                    return new Empleado(Integer.parseInt(txtId.getText()), null, txtNom.getText(), txtApe.getText(),
+                            date, null);
                 } catch (Exception ex) {
                     showAlert("Datos inválidos: " + ex.getMessage());
                     return null;
@@ -564,6 +554,7 @@ public class MainView extends BorderPane {
         table.getColumns().add(createColumn("ID", "empleadoId", 50));
         table.getColumns().add(createColumn("Nombre", "nombre", 100));
         table.getColumns().add(createColumn("Apellido", "apellido", 100));
+        table.getColumns().add(createColumn("F. Nacimiento", "fechaNac", 120));
         try {
             table.setItems(empleadoDAO.getAll());
         } catch (Exception e) {

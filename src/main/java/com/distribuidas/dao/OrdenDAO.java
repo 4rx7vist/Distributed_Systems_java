@@ -15,7 +15,7 @@ public class OrdenDAO {
 
     public ObservableList<Orden> getAll() {
         ObservableList<Orden> lista = FXCollections.observableArrayList();
-        String sql = "SELECT * FROM ORDENES ORDER BY ORDENID";
+        String sql = "SELECT * FROM VMORDENES ORDER BY ORDENID";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()) {
@@ -39,7 +39,7 @@ public class OrdenDAO {
 
     public ObservableList<DetalleOrden> getDetalles(int ordenId) {
         ObservableList<DetalleOrden> lista = FXCollections.observableArrayList();
-        String sql = "SELECT * FROM DETALLE_ORDENES WHERE ORDENID = ? ORDER BY DETALLEID";
+        String sql = "SELECT * FROM VMDETALLE_ORDENES WHERE ORDENID = ? ORDER BY DETALLEID";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, ordenId);

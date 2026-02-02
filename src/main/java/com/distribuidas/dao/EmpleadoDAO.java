@@ -14,27 +14,21 @@ public class EmpleadoDAO {
 
     public ObservableList<Empleado> getAll() {
         ObservableList<Empleado> lista = FXCollections.observableArrayList();
-        String sql = "SELECT * FROM EMPLEADOS ORDER BY EMPLEADOID";
+        // Use the database view that exposes only the required fragment
+        String sql = "SELECT EMPLEADOID, NOMBRE, APELLIDO, FECHA_NAC FROM INF_EMPLEADOS_PERSONAL ORDER BY EMPLEADOID";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                // reporta_a can be null
-                Integer reportaA = rs.getInt("REPORTA_A");
-                if (rs.wasNull())
-                    reportaA = null;
-
-                Integer extension = rs.getInt("EXTENSION");
-                if (rs.wasNull())
-                    extension = null;
-
+                // The view provides only the reduced set; leave other fields null
                 lista.add(new Empleado(
                         rs.getInt("EMPLEADOID"),
-                        reportaA,
+                        null, // reportaA not available in view
                         rs.getString("NOMBRE"),
                         rs.getString("APELLIDO"),
                         rs.getDate("FECHA_NAC"),
-                        extension));
+                        null // extension not available in view
+                ));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -43,7 +37,7 @@ public class EmpleadoDAO {
     }
 
     public boolean save(Empleado e) {
-        String sql = "INSERT INTO EMPLEADOS (EMPLEADOID, REPORTA_A, NOMBRE, APELLIDO, FECHA_NAC, EXTENSION) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO INF_EMPLEADOS_PERSONAL (EMPLEADOID, REPORTA_A, NOMBRE, APELLIDO, FECHA_NAC, EXTENSION) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, e.getEmpleadoId());
@@ -66,7 +60,7 @@ public class EmpleadoDAO {
     }
 
     public boolean update(Empleado e) {
-        String sql = "UPDATE EMPLEADOS SET REPORTA_A=?, NOMBRE=?, APELLIDO=?, FECHA_NAC=?, EXTENSION=? WHERE EMPLEADOID=?";
+        String sql = "UPDATE INF_EMPLEADOS_PERSONAL SET REPORTA_A=?, NOMBRE=?, APELLIDO=?, FECHA_NAC=?, EXTENSION=? WHERE EMPLEADOID=?";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             if (e.getReportaA() != null)
@@ -89,7 +83,7 @@ public class EmpleadoDAO {
     }
 
     public boolean delete(int id) {
-        String sql = "DELETE FROM EMPLEADOS WHERE EMPLEADOID=?";
+        String sql = "DELETE FROM INF_EMPLEADOS_PERSONAL WHERE EMPLEADOID=?";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);

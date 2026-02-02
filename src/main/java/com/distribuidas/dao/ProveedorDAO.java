@@ -14,7 +14,8 @@ public class ProveedorDAO {
 
     public ObservableList<Proveedor> getAll() {
         ObservableList<Proveedor> lista = FXCollections.observableArrayList();
-        String sql = "SELECT * FROM PROVEEDORES ORDER BY PROVEEDORID";
+        String sql = "SELECT * FROM FRAGMENTO_PROVEEDOR_GUAYAQUIL ORDER BY PROVEEDORID";
+        
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()) {
@@ -33,7 +34,7 @@ public class ProveedorDAO {
     }
 
     public boolean save(Proveedor p) {
-        String sql = "INSERT INTO PROVEEDORES (PROVEEDORID, NOMBREPROV, CONTACTO, CELUPROV, CIUDADPROV) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO FRAGMENTO_PROVEEDOR_GUAYAQUIL (PROVEEDORID, NOMBREPROV, CONTACTO, CELUPROV, CIUDADPROV) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, p.getProveedorId());
@@ -49,7 +50,7 @@ public class ProveedorDAO {
     }
 
     public boolean update(Proveedor p) {
-        String sql = "UPDATE PROVEEDORES SET NOMBREPROV=?, CONTACTO=?, CELUPROV=?, CIUDADPROV=? WHERE PROVEEDORID=?";
+        String sql = "UPDATE FRAGMENTO_PROVEEDOR_GUAYAQUIL SET NOMBREPROV=?, CONTACTO=?, CELUPROV=?, CIUDADPROV=? WHERE PROVEEDORID=?";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, p.getNombreProv());
@@ -65,7 +66,7 @@ public class ProveedorDAO {
     }
 
     public boolean delete(int id) {
-        String sql = "DELETE FROM PROVEEDORES WHERE PROVEEDORID=?";
+        String sql = "DELETE FROM FRAGMENTO_PROVEEDOR_GUAYAQUIL WHERE PROVEEDORID=?";
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
